@@ -7,7 +7,7 @@ export default function NewImagePage() {
 
         const supabase = await createClient();
 
-        const image_url = formData.get("image_url");
+        const image_url = formData.get("image_url")?.toString() ?? "";
 
         await supabase.from("images").insert({
             image_url,
@@ -18,20 +18,17 @@ export default function NewImagePage() {
 
     return (
         <main className="p-12">
-            <h1 className="text-3xl font-bold mb-6">Add Image</h1>
+            <h1 className="mb-6 text-3xl font-bold">Add Image</h1>
 
-            <form action={createImage} className="flex flex-col gap-4 max-w-md">
-
+            <form action={createImage} className="max-w-md space-y-4">
                 <input
                     name="image_url"
                     placeholder="Image URL"
-                    className="border p-3 rounded"
+                    className="w-full rounded border p-3"
                 />
-
-                <button className="bg-black text-white px-4 py-2 rounded">
+                <button className="rounded bg-black px-4 py-2 text-white">
                     Create Image
                 </button>
-
             </form>
         </main>
     );

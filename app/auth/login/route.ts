@@ -12,8 +12,11 @@ export async function GET(request: Request) {
         },
     });
 
-    if (error) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error || !data?.url) {
+        return NextResponse.json(
+            { error: error?.message ?? "Failed to start Google login" },
+            { status: 500 }
+        );
     }
 
     return NextResponse.redirect(data.url);
