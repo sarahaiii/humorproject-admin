@@ -1,11 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 
-type CaptionRow = {
-    caption?: string | null;
-    text?: string | null;
-};
-
 export default async function AdminPage() {
     const supabase = await createClient();
 
@@ -16,19 +11,6 @@ export default async function AdminPage() {
             supabase.from("captions").select("*", { count: "exact", head: true }),
         ]);
 
-    const { data: latestCaptions } = await supabase
-        .from("captions")
-        .select("caption, text")
-        .limit(20);
-
-    const captionTexts = ((latestCaptions ?? []) as CaptionRow[])
-        .map((c) => c.caption ?? c.text ?? "")
-        .join(" ")
-        .toLowerCase();
-
-    const meCount = (captionTexts.match(/\bme\b/g) || []).length;
-    const whenCount = (captionTexts.match(/\bwhen\b/g) || []).length;
-
     return (
         <main className="min-h-screen px-6 py-10">
             <div className="mx-auto max-w-7xl">
@@ -38,7 +20,7 @@ export default async function AdminPage() {
                     </p>
                     <h1 className="mt-3 text-5xl font-bold text-white">Admin Dashboard</h1>
                     <p className="mt-3 max-w-2xl text-indigo-100/70">
-                        Monitor core platform activity, manage data, and track humor-caption patterns.
+                        Manage all admin tables and project configuration from one place.
                     </p>
                 </div>
 
@@ -66,46 +48,48 @@ export default async function AdminPage() {
                     </div>
                 </div>
 
-                <div className="mt-8 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-                    <section className="glass-card">
-                        <h2 className="text-2xl font-semibold text-white">Caption Pattern Snapshot</h2>
-                        <p className="mt-5 text-indigo-100/75">
-                            In the latest caption sample,{" "}
-                            <span className="font-semibold text-white">“me”</span> appeared{" "}
-                            <span className="font-semibold text-white">{meCount}</span> times and{" "}
-                            <span className="font-semibold text-white">“when”</span> appeared{" "}
-                            <span className="font-semibold text-white">{whenCount}</span> times.
-                        </p>
-                    </section>
+                <section className="mt-10">
+                    <h2 className="mb-6 text-2xl font-semibold text-white">
+                        Admin Sections
+                    </h2>
 
-                    <section className="glass-card">
-                        <h2 className="text-2xl font-semibold text-white">Quick Navigation</h2>
+                    <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+                        <AdminCard href="/admin/users" title="Users" />
+                        <AdminCard href="/admin/images" title="Images" />
+                        <AdminCard href="/admin/captions" title="Captions" />
 
-                        <div className="mt-6 grid gap-4">
-                            <Link
-                                href="/admin/users"
-                                className="rounded-2xl border border-indigo-400/20 bg-indigo-500/10 px-5 py-4 text-indigo-50 transition hover:bg-indigo-500/20"
-                            >
-                                Manage Users
-                            </Link>
+                        <AdminCard href="/admin/humor-flavors" title="Humor Flavors" />
+                        <AdminCard href="/admin/humor-flavor-steps" title="Humor Flavor Steps" />
+                        <AdminCard href="/admin/humor-mix" title="Humor Mix" />
 
-                            <Link
-                                href="/admin/images"
-                                className="rounded-2xl border border-indigo-400/20 bg-indigo-500/10 px-5 py-4 text-indigo-50 transition hover:bg-indigo-500/20"
-                            >
-                                Manage Images
-                            </Link>
+                        <AdminCard href="/admin/terms" title="Terms" />
+                        <AdminCard href="/admin/caption-examples" title="Caption Examples" />
+                        <AdminCard href="/admin/caption-requests" title="Caption Requests" />
 
-                            <Link
-                                href="/admin/captions"
-                                className="rounded-2xl border border-indigo-400/20 bg-indigo-500/10 px-5 py-4 text-indigo-50 transition hover:bg-indigo-500/20"
-                            >
-                                View Captions
-                            </Link>
-                        </div>
-                    </section>
-                </div>
+                        <AdminCard href="/admin/llm-models" title="LLM Models" />
+                        <AdminCard href="/admin/llm-providers" title="LLM Providers" />
+                        <AdminCard href="/admin/llm-prompt-chains" title="LLM Prompt Chains" />
+
+                        <AdminCard href="/admin/llm-responses" title="LLM Responses" />
+                        <AdminCard href="/admin/allowed-signup-domains" title="Allowed Signup Domains" />
+                        <AdminCard href="/admin/whitelist-emails" title="Whitelisted Emails" />
+                    </div>
+                </section>
             </div>
         </main>
+    );
+}
+
+function AdminCard({ href, title }: { href: string; title: string }) {
+    return (
+        <Link
+            href={href}
+            className="rounded-2xl border border-indigo-400/20 bg-indigo-500/10 p-6 text-indigo-50 transition hover:bg-indigo-500/20"
+        >
+            <div className="text-lg font-semibold">{title}</div>
+            <p className="mt-2 text-sm text-indigo-200/70">
+                Open {title.toLowerCase()}
+            </p>
+        </Link>
     );
 }
