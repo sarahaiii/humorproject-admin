@@ -1,16 +1,19 @@
 import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+import { NextResponse } from "next/server";
 
 export async function GET(
-    _request: Request,
-    { params }: { params: { id: string } }
+    request: Request,
+    { params }: { params: Promise<{ id: string }> }
 ) {
+    const { id } = await params;
     const supabase = await createClient();
 
     await supabase
         .from("llm_providers")
         .delete()
-        .eq("id", params.id);
+        .eq("id", id);
 
-    redirect("/admin/llm-providers");
+    return NextResponse.redirect(
+        new URL("/admin/llm-providers", request.url)
+    );
 }
