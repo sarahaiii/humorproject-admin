@@ -5,7 +5,7 @@ export async function GET(
     request: Request,
     { params }: { params: { id: string } }
 ) {
-    const { id } = await params;
+    const { id } = params;
     const supabase = await createClient();
 
     await supabase.from("terms").delete().eq("id", id);
