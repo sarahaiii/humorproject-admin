@@ -1,41 +1,158 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
-export default function NewLlmModelPage() {
+export default async function NewLlmModelPage() {
     async function createModel(formData: FormData) {
         "use server";
 
         const supabase = await createClient();
-        const name = formData.get("name")?.toString() ?? "";
 
-        await supabase.from("llm_models").insert({
-            name,
-        });
+        const {
+            data: { user },
+            error: userError,
+        } = await supabase.auth.getUser();
+
+        if (userError || !user) {
+            redirect("/login");
+        }
+
+        const name = formData.get("name")?.toString().trim() ?? "";
+        const providerName =
+            formData.get("provider_name")?.toString().trim() ?? "";
+        const provider_model_id =
+            formData.get("provider_model_id")?.toString().trim() ?? "";
+        const is_temperature_supported =
+            formData.get("is_temperature_supported") === "on";
+
+        if (!name || !providerName || !provider_model_id) {
+            throw new Error("Please fill in all required fields.");
+        }
+
+        // 1. Try to find existing provider by name
+        let { data: provider, error: providerLookupError } = await supabase
+            .from("llm_providers")
+            .select("id, name")
+            .ilike("name", providerName)
+            .maybeSingle();
+
+        if (providerLookupError) {
+            throw new Error(providerLookupError.message);
+        }
+
+        // 2. If not found, create provider and let DB assign the id
+        if (!provider) {
+            const { data: newProvider, error: providerInsertError } = await supabase
+                .from("llm_providers")
+                .insert({
+                    name: providerName,
+                    created_by_user_id: user.id,
+                    modified_by_user_id: user.id,
+                })
+                .select("id, name")
+                .single();
+
+            if (providerInsertError || !newProvider) {
+                throw new Error(providerInsertError?.message ?? "Failed to create provider.");
+            }
+
+            provider = newProvider;
+        }
+
+        // 3. Insert model using provider.id
+        const { error: modelInsertError } = await supabase
+            .from("llm_models")
+            .insert({
+                name,
+                llm_provider_id: provider.id,
+                provider_model_id,
+                is_temperature_supported,
+                created_by_user_id: user.id,
+                modified_by_user_id: user.id,
+            });
+
+        if (modelInsertError) {
+            throw new Error(modelInsertError.message);
+        }
 
         redirect("/admin/llm-models");
     }
 
     return (
-        <main className="p-12">
-            <div className="mx-auto max-w-2xl">
-                <h1 className="mb-6 text-4xl font-bold text-white">Add LLM Model</h1>
+        <main className="px-6 py-10">
+            <div className="mx-auto max-w-3xl">
+                <div className="mb-8 flex items-center justify-between">
+                    <h1 className="text-5xl font-bold text-white">Add LLM Model</h1>
 
-                <form
-                    action={createModel}
-                    className="space-y-4 rounded-2xl border bg-white p-6 text-gray-900 shadow-sm"
-                >
-                    <div>
-                        <label className="mb-2 block text-sm font-medium">Name</label>
-                        <input
-                            name="name"
-                            className="w-full rounded-lg border px-4 py-3"
-                        />
-                    </div>
+                    <Link
+                        href="/admin/llm-models"
+                        className="rounded-xl border border-white/20 px-4 py-2 text-white hover:bg-white/10"
+                    >
+                        Back
+                    </Link>
+                </div>
 
-                    <button className="rounded-full bg-black px-5 py-3 text-sm font-semibold text-white">
-                        Create Model
-                    </button>
-                </form>
+                <div className="glass-card rounded-2xl p-8">
+                    <form action={createModel} className="space-y-6">
+                        <div>
+                            <label className="mb-2 block text-indigo-100">
+                                Model Name
+                            </label>
+                            <input
+                                name="name"
+                                required
+                                placeholder="GPT 5 Mini"
+                                className="w-full rounded-xl border border-white/20 bg-transparent p-4 text-white"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="mb-2 block text-indigo-100">
+                                Provider Name
+                            </label>
+                            <input
+                                name="provider_name"
+                                required
+                                placeholder="OpenAI"
+                                className="w-full rounded-xl border border-white/20 bg-transparent p-4 text-white"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="mb-2 block text-indigo-100">
+                                Provider Model ID
+                            </label>
+                            <input
+                                name="provider_model_id"
+                                required
+                                placeholder="gpt-5-mini-2025-08-07"
+                                className="w-full rounded-xl border border-white/20 bg-transparent p-4 text-white"
+                            />
+                        </div>
+
+                        <label className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-4 text-white">
+                            <input
+                                type="checkbox"
+                                name="is_temperature_supported"
+                                className="h-4 w-4"
+                            />
+                            <span>Supports Temperature</span>
+                        </label>
+
+                        <div className="flex gap-4 pt-2">
+                            <button className="rounded-xl bg-black px-6 py-3 text-white">
+                                Create Model
+                            </button>
+
+                            <Link
+                                href="/admin/llm-models"
+                                className="rounded-xl border border-white/20 px-6 py-3 text-white"
+                            >
+                                Cancel
+                            </Link>
+                        </div>
+                    </form>
+                </div>
             </div>
         </main>
     );

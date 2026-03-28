@@ -1,8 +1,32 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function AdminPage() {
     const supabase = await createClient();
+
+    const {
+        data: { user },
+        error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+        redirect("/login");
+    }
+
+    const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("id, email, is_superadmin")
+        .eq("id", user.id)
+        .single();
+
+    if (profileError || !profile) {
+        redirect("/");
+    }
+
+    if (!profile.is_superadmin) {
+        redirect("/");
+    }
 
     const [{ count: userCount }, { count: imageCount }, { count: captionCount }] =
         await Promise.all([
@@ -57,19 +81,15 @@ export default async function AdminPage() {
                         <AdminCard href="/admin/users" title="Users" />
                         <AdminCard href="/admin/images" title="Images" />
                         <AdminCard href="/admin/captions" title="Captions" />
-
                         <AdminCard href="/admin/humor-flavors" title="Humor Flavors" />
                         <AdminCard href="/admin/humor-flavor-steps" title="Humor Flavor Steps" />
                         <AdminCard href="/admin/humor-mix" title="Humor Mix" />
-
                         <AdminCard href="/admin/terms" title="Terms" />
                         <AdminCard href="/admin/caption-examples" title="Caption Examples" />
                         <AdminCard href="/admin/caption-requests" title="Caption Requests" />
-
                         <AdminCard href="/admin/llm-models" title="LLM Models" />
                         <AdminCard href="/admin/llm-providers" title="LLM Providers" />
                         <AdminCard href="/admin/llm-prompt-chains" title="LLM Prompt Chains" />
-
                         <AdminCard href="/admin/llm-responses" title="LLM Responses" />
                         <AdminCard href="/admin/allowed-signup-domains" title="Allowed Signup Domains" />
                         <AdminCard href="/admin/whitelist-emails" title="Whitelisted Emails" />

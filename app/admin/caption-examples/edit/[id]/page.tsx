@@ -1,11 +1,6 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-
-type CaptionExampleRow = {
-    id: string;
-    caption?: string | null;
-    example?: string | null;
-};
 
 export default async function EditCaptionExamplePage({
                                                          params,
@@ -15,35 +10,40 @@ export default async function EditCaptionExamplePage({
     const { id } = await params;
     const supabase = await createClient();
 
-    const { data, error } = await supabase
+    // get caption example
+    const { data: example, error } = await supabase
         .from("caption_examples")
         .select("*")
         .eq("id", id)
         .single();
 
-    if (error) {
-        return (
-            <main className="p-10 text-white">
-                Error loading caption example: {error.message}
-            </main>
-        );
+    // get all images for dropdown
+    const { data: images } = await supabase
+        .from("images")
+        .select("id, url")
+        .order("created_datetime_utc");
+
+    if (error || !example) {
+        redirect("/admin/caption-examples");
     }
 
-    const row = data as CaptionExampleRow;
-
-    async function updateCaptionExample(formData: FormData) {
+    async function updateExample(formData: FormData) {
         "use server";
 
         const supabase = await createClient();
 
         const caption = formData.get("caption")?.toString() ?? "";
-        const example = formData.get("example")?.toString() ?? "";
+        const explanation = formData.get("explanation")?.toString() ?? "";
+        const priority = Number(formData.get("priority") ?? 0);
+        const image_id = formData.get("image_id")?.toString() || null;
 
         await supabase
             .from("caption_examples")
             .update({
                 caption,
-                example,
+                explanation,
+                priority,
+                image_id,
             })
             .eq("id", id);
 
@@ -51,37 +51,107 @@ export default async function EditCaptionExamplePage({
     }
 
     return (
-        <main className="p-12">
-            <div className="mx-auto max-w-2xl">
-                <h1 className="mb-6 text-4xl font-bold text-white">Edit Caption Example</h1>
+        <main className="px-6 py-10">
+            <div className="mx-auto max-w-4xl">
 
-                <form
-                    action={updateCaptionExample}
-                    className="space-y-4 rounded-2xl border bg-white p-6 text-gray-900 shadow-sm"
-                >
-                    <div>
-                        <label className="mb-2 block text-sm font-medium">Caption</label>
-                        <input
-                            name="caption"
-                            defaultValue={row.caption ?? ""}
-                            className="w-full rounded-lg border px-4 py-3"
-                        />
-                    </div>
+                <div className="mb-8 flex items-center justify-between">
+                    <h1 className="text-5xl font-bold text-white">
+                        Edit Caption Example
+                    </h1>
 
-                    <div>
-                        <label className="mb-2 block text-sm font-medium">Example</label>
-                        <textarea
-                            name="example"
-                            rows={5}
-                            defaultValue={row.example ?? ""}
-                            className="w-full rounded-lg border px-4 py-3"
-                        />
-                    </div>
+                    <Link
+                        href="/admin/caption-examples"
+                        className="rounded-xl border border-white/20 px-4 py-2 text-white hover:bg-white/10"
+                    >
+                        Back
+                    </Link>
+                </div>
 
-                    <button className="rounded-full bg-black px-5 py-3 text-sm font-semibold text-white">
-                        Save Changes
-                    </button>
-                </form>
+                <div className="glass-card rounded-2xl p-8 space-y-6">
+
+                    <form action={updateExample} className="space-y-6">
+
+                        {/* caption */}
+                        <div>
+                            <label className="block text-indigo-100 mb-2">
+                                Caption
+                            </label>
+
+                            <input
+                                name="caption"
+                                defaultValue={example.caption ?? ""}
+                                className="w-full rounded-xl border border-white/20 bg-transparent p-4 text-white"
+                            />
+                        </div>
+
+                        {/* explanation */}
+                        <div>
+                            <label className="block text-indigo-100 mb-2">
+                                Explanation
+                            </label>
+
+                            <textarea
+                                name="explanation"
+                                rows={6}
+                                defaultValue={example.explanation ?? ""}
+                                className="w-full rounded-xl border border-white/20 bg-transparent p-4 text-white"
+                            />
+                        </div>
+
+                        {/* priority */}
+                        <div>
+                            <label className="block text-indigo-100 mb-2">
+                                Priority
+                            </label>
+
+                            <input
+                                type="number"
+                                name="priority"
+                                defaultValue={example.priority ?? 0}
+                                className="w-full rounded-xl border border-white/20 bg-transparent p-4 text-white"
+                            />
+                        </div>
+
+                        {/* image dropdown */}
+                        <div>
+                            <label className="block text-indigo-100 mb-2">
+                                Image
+                            </label>
+
+                            <select
+                                name="image_id"
+                                defaultValue={example.image_id ?? ""}
+                                className="w-full rounded-xl border border-white/20 bg-transparent p-4 text-white"
+                            >
+                                <option value="">None</option>
+
+                                {images?.map((img) => (
+                                    <option key={img.id} value={img.id}>
+                                        {img.id.slice(0,8)}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* submit */}
+                        <div className="flex gap-4 pt-2">
+
+                            <button className="rounded-xl bg-black px-6 py-3 text-white">
+                                Update Caption Example
+                            </button>
+
+                            <Link
+                                href="/admin/caption-examples"
+                                className="rounded-xl border border-white/20 px-6 py-3 text-white"
+                            >
+                                Cancel
+                            </Link>
+
+                        </div>
+
+                    </form>
+
+                </div>
             </div>
         </main>
     );
