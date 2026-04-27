@@ -25,7 +25,6 @@ export default function NewImagePage() {
         const fileExt = file.name.split(".").pop();
         const filePath = `${user.id}/${Date.now()}.${fileExt}`;
 
-        // upload file to storage
         const { error: uploadError } = await supabase.storage
             .from("images")
             .upload(filePath, file);
@@ -34,14 +33,12 @@ export default function NewImagePage() {
             throw new Error(uploadError.message);
         }
 
-        // get public url
         const { data } = supabase.storage
             .from("images")
             .getPublicUrl(filePath);
 
         const publicUrl = data.publicUrl;
 
-        // insert into images table
         const { error: insertError } = await supabase
             .from("images")
             .insert({
@@ -59,21 +56,23 @@ export default function NewImagePage() {
 
     return (
         <main className="p-12">
-            <h1 className="mb-6 text-3xl font-bold">Add Image</h1>
+            <div className="mx-auto max-w-md">
+                <h1 className="mb-6 text-3xl font-bold text-[#0c1a2e]">Add Image</h1>
 
-            <form action={createImage} className="max-w-md space-y-4">
-                <input
-                    type="file"
-                    name="image_file"
-                    accept="image/*"
-                    required
-                    className="w-full rounded border p-3"
-                />
+                <form action={createImage} className="space-y-4 rounded-2xl border border-[rgba(120,175,255,0.4)] bg-white/75 p-6">
+                    <input
+                        type="file"
+                        name="image_file"
+                        accept="image/*"
+                        required
+                        className="w-full rounded-xl border border-[rgba(120,175,255,0.4)] p-3 text-[#1a3a5c]"
+                    />
 
-                <button className="rounded bg-black px-4 py-2 text-white">
-                    Upload Image
-                </button>
-            </form>
+                    <button className="rounded-full bg-[#60a5fa] px-5 py-3 text-sm font-semibold text-white hover:bg-[#3b82f6]">
+                        Upload Image
+                    </button>
+                </form>
+            </div>
         </main>
     );
 }

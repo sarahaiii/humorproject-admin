@@ -17,7 +17,7 @@ export default async function ImagesPage() {
 
     if (error) {
         return (
-            <main className="p-10 text-white">
+            <main className="p-10 text-[#1a3a5c]">
                 Error loading images: {error.message}
             </main>
         );
@@ -28,15 +28,15 @@ export default async function ImagesPage() {
             <div className="mx-auto max-w-7xl">
                 <div className="mb-8 flex items-center justify-between">
                     <div>
-                        <h1 className="text-4xl font-bold text-white">Images</h1>
-                        <p className="mt-2 text-indigo-100/70">
+                        <h1 className="text-4xl font-bold text-[#0c1a2e]">Images</h1>
+                        <p className="mt-2 text-[#6a9cbf]">
                             Create, view, edit, and delete images.
                         </p>
                     </div>
 
                     <Link
                         href="/admin/images/new"
-                        className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-gray-900 shadow-sm transition hover:bg-gray-100"
+                        className="rounded-full bg-[#60a5fa] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#3b82f6]"
                     >
                         + Add Image
                     </Link>
@@ -46,9 +46,9 @@ export default async function ImagesPage() {
                     {(images as ImageRow[] | null)?.map((img) => (
                         <div
                             key={img.id}
-                            className="overflow-hidden rounded-3xl border border-white/10 bg-white shadow-xl"
+                            className="overflow-hidden rounded-3xl border border-[rgba(120,175,255,0.4)] bg-white/75 shadow-sm"
                         >
-                            <div className="aspect-[4/3] bg-gray-100">
+                            <div className="aspect-[4/3] bg-blue-50">
                                 {img.url ? (
                                     <img
                                         src={img.url}
@@ -56,14 +56,14 @@ export default async function ImagesPage() {
                                         className="h-full w-full object-cover"
                                     />
                                 ) : (
-                                    <div className="flex h-full items-center justify-center text-sm text-gray-500">
+                                    <div className="flex h-full items-center justify-center text-sm text-[#6a9cbf]">
                                         No image preview
                                     </div>
                                 )}
                             </div>
 
-                            <div className="p-5 text-gray-900">
-                                <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                            <div className="p-5 text-[#1a3a5c]">
+                                <p className="text-xs font-medium uppercase tracking-wide text-[#6a9cbf]">
                                     ID
                                 </p>
                                 <p className="mt-2 break-all font-mono text-sm">{img.id}</p>
@@ -71,13 +71,13 @@ export default async function ImagesPage() {
                                 <div className="mt-5 flex items-center gap-5 text-sm font-medium">
                                     <Link
                                         href={`/admin/images/edit/${img.id}`}
-                                        className="text-blue-600 hover:underline"
+                                        className="text-[#3b82f6] hover:underline"
                                     >
                                         Edit
                                     </Link>
 
                                     <form action={`/admin/images/delete/${img.id}`}>
-                                        <button className="text-red-600 hover:underline">
+                                        <button className="text-red-500 hover:underline">
                                             Delete
                                         </button>
                                     </form>

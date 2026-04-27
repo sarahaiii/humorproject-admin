@@ -10,14 +10,12 @@ export default async function EditCaptionExamplePage({
     const { id } = await params;
     const supabase = await createClient();
 
-    // get caption example
     const { data: example, error } = await supabase
         .from("caption_examples")
         .select("*")
         .eq("id", id)
         .single();
 
-    // get all images for dropdown
     const { data: images } = await supabase
         .from("images")
         .select("id, url")
@@ -39,12 +37,7 @@ export default async function EditCaptionExamplePage({
 
         await supabase
             .from("caption_examples")
-            .update({
-                caption,
-                explanation,
-                priority,
-                image_id,
-            })
+            .update({ caption, explanation, priority, image_id })
             .eq("id", id);
 
         redirect("/admin/caption-examples");
@@ -53,104 +46,75 @@ export default async function EditCaptionExamplePage({
     return (
         <main className="px-6 py-10">
             <div className="mx-auto max-w-4xl">
-
                 <div className="mb-8 flex items-center justify-between">
-                    <h1 className="text-5xl font-bold text-white">
-                        Edit Caption Example
-                    </h1>
-
+                    <h1 className="text-5xl font-bold text-[#0c1a2e]">Edit Caption Example</h1>
                     <Link
                         href="/admin/caption-examples"
-                        className="rounded-xl border border-white/20 px-4 py-2 text-white hover:bg-white/10"
+                        className="rounded-xl border border-[rgba(120,175,255,0.4)] px-4 py-2 text-[#1a3a5c] hover:bg-blue-50"
                     >
                         Back
                     </Link>
                 </div>
 
                 <div className="glass-card rounded-2xl p-8 space-y-6">
-
                     <form action={updateExample} className="space-y-6">
-
-                        {/* caption */}
                         <div>
-                            <label className="block text-indigo-100 mb-2">
-                                Caption
-                            </label>
-
+                            <label className="block text-sm font-medium text-[#1a3a5c] mb-2">Caption</label>
                             <input
                                 name="caption"
                                 defaultValue={example.caption ?? ""}
-                                className="w-full rounded-xl border border-white/20 bg-transparent p-4 text-white"
+                                className="w-full rounded-xl border border-[rgba(120,175,255,0.4)] bg-white/50 p-4 text-[#1a3a5c]"
                             />
                         </div>
 
-                        {/* explanation */}
                         <div>
-                            <label className="block text-indigo-100 mb-2">
-                                Explanation
-                            </label>
-
+                            <label className="block text-sm font-medium text-[#1a3a5c] mb-2">Explanation</label>
                             <textarea
                                 name="explanation"
                                 rows={6}
                                 defaultValue={example.explanation ?? ""}
-                                className="w-full rounded-xl border border-white/20 bg-transparent p-4 text-white"
+                                className="w-full rounded-xl border border-[rgba(120,175,255,0.4)] bg-white/50 p-4 text-[#1a3a5c]"
                             />
                         </div>
 
-                        {/* priority */}
                         <div>
-                            <label className="block text-indigo-100 mb-2">
-                                Priority
-                            </label>
-
+                            <label className="block text-sm font-medium text-[#1a3a5c] mb-2">Priority</label>
                             <input
                                 type="number"
                                 name="priority"
                                 defaultValue={example.priority ?? 0}
-                                className="w-full rounded-xl border border-white/20 bg-transparent p-4 text-white"
+                                className="w-full rounded-xl border border-[rgba(120,175,255,0.4)] bg-white/50 p-4 text-[#1a3a5c]"
                             />
                         </div>
 
-                        {/* image dropdown */}
                         <div>
-                            <label className="block text-indigo-100 mb-2">
-                                Image
-                            </label>
-
+                            <label className="block text-sm font-medium text-[#1a3a5c] mb-2">Image</label>
                             <select
                                 name="image_id"
                                 defaultValue={example.image_id ?? ""}
-                                className="w-full rounded-xl border border-white/20 bg-transparent p-4 text-white"
+                                className="w-full rounded-xl border border-[rgba(120,175,255,0.4)] bg-white/50 p-4 text-[#1a3a5c]"
                             >
                                 <option value="">None</option>
-
                                 {images?.map((img) => (
                                     <option key={img.id} value={img.id}>
-                                        {img.id.slice(0,8)}
+                                        {img.id.slice(0, 8)}
                                     </option>
                                 ))}
                             </select>
                         </div>
 
-                        {/* submit */}
                         <div className="flex gap-4 pt-2">
-
-                            <button className="rounded-xl bg-black px-6 py-3 text-white">
+                            <button className="rounded-xl bg-[#60a5fa] px-6 py-3 text-white hover:bg-[#3b82f6]">
                                 Update Caption Example
                             </button>
-
                             <Link
                                 href="/admin/caption-examples"
-                                className="rounded-xl border border-white/20 px-6 py-3 text-white"
+                                className="rounded-xl border border-[rgba(120,175,255,0.4)] px-6 py-3 text-[#1a3a5c] hover:bg-blue-50"
                             >
                                 Cancel
                             </Link>
-
                         </div>
-
                     </form>
-
                 </div>
             </div>
         </main>

@@ -18,18 +18,14 @@ export default async function NewLlmModelPage() {
         }
 
         const name = formData.get("name")?.toString().trim() ?? "";
-        const providerName =
-            formData.get("provider_name")?.toString().trim() ?? "";
-        const provider_model_id =
-            formData.get("provider_model_id")?.toString().trim() ?? "";
-        const is_temperature_supported =
-            formData.get("is_temperature_supported") === "on";
+        const providerName = formData.get("provider_name")?.toString().trim() ?? "";
+        const provider_model_id = formData.get("provider_model_id")?.toString().trim() ?? "";
+        const is_temperature_supported = formData.get("is_temperature_supported") === "on";
 
         if (!name || !providerName || !provider_model_id) {
             throw new Error("Please fill in all required fields.");
         }
 
-        // 1. Try to find existing provider by name
         let { data: provider, error: providerLookupError } = await supabase
             .from("llm_providers")
             .select("id, name")
@@ -40,7 +36,6 @@ export default async function NewLlmModelPage() {
             throw new Error(providerLookupError.message);
         }
 
-        // 2. If not found, create provider and let DB assign the id
         if (!provider) {
             const { data: newProvider, error: providerInsertError } = await supabase
                 .from("llm_providers")
@@ -59,7 +54,6 @@ export default async function NewLlmModelPage() {
             provider = newProvider;
         }
 
-        // 3. Insert model using provider.id
         const { error: modelInsertError } = await supabase
             .from("llm_models")
             .insert({
@@ -82,11 +76,10 @@ export default async function NewLlmModelPage() {
         <main className="px-6 py-10">
             <div className="mx-auto max-w-3xl">
                 <div className="mb-8 flex items-center justify-between">
-                    <h1 className="text-5xl font-bold text-white">Add LLM Model</h1>
-
+                    <h1 className="text-5xl font-bold text-[#0c1a2e]">Add LLM Model</h1>
                     <Link
                         href="/admin/llm-models"
-                        className="rounded-xl border border-white/20 px-4 py-2 text-white hover:bg-white/10"
+                        className="rounded-xl border border-[rgba(120,175,255,0.4)] px-4 py-2 text-[#1a3a5c] hover:bg-blue-50"
                     >
                         Back
                     </Link>
@@ -95,58 +88,47 @@ export default async function NewLlmModelPage() {
                 <div className="glass-card rounded-2xl p-8">
                     <form action={createModel} className="space-y-6">
                         <div>
-                            <label className="mb-2 block text-indigo-100">
-                                Model Name
-                            </label>
+                            <label className="mb-2 block text-sm font-medium text-[#1a3a5c]">Model Name</label>
                             <input
                                 name="name"
                                 required
                                 placeholder="GPT 5 Mini"
-                                className="w-full rounded-xl border border-white/20 bg-transparent p-4 text-white"
+                                className="w-full rounded-xl border border-[rgba(120,175,255,0.4)] bg-white/50 p-4 text-[#1a3a5c] placeholder:text-[#6a9cbf]"
                             />
                         </div>
 
                         <div>
-                            <label className="mb-2 block text-indigo-100">
-                                Provider Name
-                            </label>
+                            <label className="mb-2 block text-sm font-medium text-[#1a3a5c]">Provider Name</label>
                             <input
                                 name="provider_name"
                                 required
                                 placeholder="OpenAI"
-                                className="w-full rounded-xl border border-white/20 bg-transparent p-4 text-white"
+                                className="w-full rounded-xl border border-[rgba(120,175,255,0.4)] bg-white/50 p-4 text-[#1a3a5c] placeholder:text-[#6a9cbf]"
                             />
                         </div>
 
                         <div>
-                            <label className="mb-2 block text-indigo-100">
-                                Provider Model ID
-                            </label>
+                            <label className="mb-2 block text-sm font-medium text-[#1a3a5c]">Provider Model ID</label>
                             <input
                                 name="provider_model_id"
                                 required
                                 placeholder="gpt-5-mini-2025-08-07"
-                                className="w-full rounded-xl border border-white/20 bg-transparent p-4 text-white"
+                                className="w-full rounded-xl border border-[rgba(120,175,255,0.4)] bg-white/50 p-4 text-[#1a3a5c] placeholder:text-[#6a9cbf]"
                             />
                         </div>
 
-                        <label className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-4 text-white">
-                            <input
-                                type="checkbox"
-                                name="is_temperature_supported"
-                                className="h-4 w-4"
-                            />
+                        <label className="flex items-center gap-3 rounded-xl border border-[rgba(120,175,255,0.4)] bg-blue-50 p-4 text-[#1a3a5c]">
+                            <input type="checkbox" name="is_temperature_supported" className="h-4 w-4" />
                             <span>Supports Temperature</span>
                         </label>
 
                         <div className="flex gap-4 pt-2">
-                            <button className="rounded-xl bg-black px-6 py-3 text-white">
+                            <button className="rounded-xl bg-[#60a5fa] px-6 py-3 text-white hover:bg-[#3b82f6]">
                                 Create Model
                             </button>
-
                             <Link
                                 href="/admin/llm-models"
-                                className="rounded-xl border border-white/20 px-6 py-3 text-white"
+                                className="rounded-xl border border-[rgba(120,175,255,0.4)] px-6 py-3 text-[#1a3a5c] hover:bg-blue-50"
                             >
                                 Cancel
                             </Link>
