@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { ScoreDistributionChart, VoteBreakdownChart, LikeRateDonut } from "./components/RatingCharts";
+import type { ScoreBucket, CaptionChartRow } from "./components/RatingCharts";
 
 type VoteRow = { caption_id: string; vote_value: number };
 type CaptionRow = { id: string; content: string | null; image_id: string | null; images: { url: string }[] | null };
@@ -49,6 +51,31 @@ export default async function AdminPage() {
     const sorted = Object.entries(scoreMap).sort((a, b) => b[1].score - a[1].score);
     const topIds = sorted.slice(0, 10).map(([id]) => id);
     const bottomIds = [...sorted].reverse().slice(0, 10).map(([id]) => id);
+
+    // Analytics data
+    const captionsWithVotes = Object.keys(scoreMap).length;
+    const totalScore = Object.values(scoreMap).reduce((sum, s) => sum + s.score, 0);
+    const avgScore = captionsWithVotes > 0 ? (totalScore / captionsWithVotes).toFixed(1) : "0.0";
+    const avgVotesPerRated = captionsWithVotes > 0 ? (totalVotes / captionsWithVotes).toFixed(1) : "0.0";
+
+    const scoreBuckets: ScoreBucket[] = [
+        { label: "≤ -3", count: 0 },
+        { label: "  -2", count: 0 },
+        { label: "  -1", count: 0 },
+        { label: "   0", count: 0 },
+        { label: "  +1", count: 0 },
+        { label: "  +2", count: 0 },
+        { label: "≥ +3", count: 0 },
+    ];
+    for (const s of Object.values(scoreMap)) {
+        if (s.score <= -3) scoreBuckets[0].count++;
+        else if (s.score === -2) scoreBuckets[1].count++;
+        else if (s.score === -1) scoreBuckets[2].count++;
+        else if (s.score === 0) scoreBuckets[3].count++;
+        else if (s.score === 1) scoreBuckets[4].count++;
+        else if (s.score === 2) scoreBuckets[5].count++;
+        else scoreBuckets[6].count++;
+    }
     const allRankedIds = [...new Set([...topIds, ...bottomIds])];
 
     let captionDetails: CaptionRow[] = [];
@@ -63,6 +90,12 @@ export default async function AdminPage() {
     const captionMap = Object.fromEntries(captionDetails.map(c => [c.id, c]));
     const topCaptions = topIds.map(id => ({ id, cap: captionMap[id], stats: scoreMap[id] })).filter(r => r.cap);
     const bottomCaptions = bottomIds.map(id => ({ id, cap: captionMap[id], stats: scoreMap[id] })).filter(r => r.cap);
+
+    const topCaptionChartData: CaptionChartRow[] = topCaptions.slice(0, 8).map(({ cap, stats }) => {
+        const text = cap.content ?? "";
+        const label = text.length > 28 ? text.slice(0, 27) + "…" : text;
+        return { label, likes: stats.likes, dislikes: stats.dislikes, score: stats.score };
+    });
 
     return (
         <main className="min-h-screen px-6 py-10">
@@ -92,6 +125,56 @@ export default async function AdminPage() {
                     <StatCard label="👎 Not Funny Votes" value={totalDislikes} accent="red" />
                     <StatCard label="Like Rate" value={`${likeRate}%`} accent="yellow" />
                 </div>
+
+                <section className="mt-10">
+                    <h2 className="mb-6 text-xl font-semibold text-[#0c1a2e]">Rating Analytics</h2>
+
+                    <div className="grid gap-6 xl:grid-cols-3 mb-6">
+                        <div className="glass-card">
+                            <p className="text-sm text-[#6a9cbf]">Captions Rated</p>
+                            <p className="mt-2 text-3xl font-bold text-[#0c1a2e]">{captionsWithVotes}</p>
+                            <p className="mt-1 text-xs text-[#6a9cbf]">
+                                of {captionCount ?? 0} total
+                                {captionCount && captionsWithVotes > 0
+                                    ? ` (${Math.round((captionsWithVotes / captionCount) * 100)}% engagement)`
+                                    : ""}
+                            </p>
+                        </div>
+                        <div className="glass-card">
+                            <p className="text-sm text-[#6a9cbf]">Avg Score per Caption</p>
+                            <p className={`mt-2 text-3xl font-bold ${Number(avgScore) > 0 ? "text-emerald-600" : Number(avgScore) < 0 ? "text-rose-500" : "text-[#0c1a2e]"}`}>
+                                {Number(avgScore) > 0 ? `+${avgScore}` : avgScore}
+                            </p>
+                            <p className="mt-1 text-xs text-[#6a9cbf]">across rated captions</p>
+                        </div>
+                        <div className="glass-card">
+                            <p className="text-sm text-[#6a9cbf]">Avg Votes per Caption</p>
+                            <p className="mt-2 text-3xl font-bold text-[#0c1a2e]">{avgVotesPerRated}</p>
+                            <p className="mt-1 text-xs text-[#6a9cbf]">votes per rated caption</p>
+                        </div>
+                    </div>
+
+                    <div className="grid gap-6 xl:grid-cols-2">
+                        <div className="glass-card">
+                            <h3 className="font-semibold text-[#0c1a2e]">Score Distribution</h3>
+                            <p className="mt-0.5 mb-4 text-xs text-[#6a9cbf]">Captions grouped by net score</p>
+                            <ScoreDistributionChart data={scoreBuckets} />
+                        </div>
+                        <div className="glass-card">
+                            <h3 className="font-semibold text-[#0c1a2e]">Like vs Dislike Ratio</h3>
+                            <p className="mt-0.5 mb-4 text-xs text-[#6a9cbf]">Overall vote breakdown across all captions</p>
+                            <LikeRateDonut likes={totalLikes} dislikes={totalDislikes} />
+                        </div>
+                    </div>
+
+                    {topCaptionChartData.length > 0 && (
+                        <div className="mt-6 glass-card">
+                            <h3 className="font-semibold text-[#0c1a2e]">Top Captions — Vote Breakdown</h3>
+                            <p className="mt-0.5 mb-4 text-xs text-[#6a9cbf]">Likes and dislikes for the 8 highest-scored captions</p>
+                            <VoteBreakdownChart data={topCaptionChartData} />
+                        </div>
+                    )}
+                </section>
 
                 {topCaptions.length > 0 && (
                     <section className="mt-10">
